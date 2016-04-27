@@ -8,3 +8,13 @@ gx = 640
 zoom0 = 40
 zoomrange = -1, 1
 
+controlscheme = "rando"
+
+
+colors = [
+	(50, 150, 50),
+	(150, 50, 150),
+	(150, 80, 0),
+]
+
+bends = [0.2, 0.4, -0.3]

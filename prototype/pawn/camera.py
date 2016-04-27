@@ -1,3 +1,5 @@
+from __future__ import division
+
 import pygame, math
 import settings, grid
 
@@ -20,6 +22,9 @@ VscaleG = settings.zoom0
 def VconvertG((xG, yG)):
 	x0V, y0V = grectV.center
 	return x0V + int(VscaleG * (xG - x0G)), int(y0V - VscaleG * (yG - y0G))
+def GconvertV((xV, yV)):
+	x0V, y0V = grectV.center
+	return x0G + (xV - x0V) / VscaleG, y0G - (yV - y0V) / VscaleG
 
 def scoot((dx, dy)):
 	global x0G, y0G
