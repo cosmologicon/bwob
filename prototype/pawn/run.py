@@ -1,44 +1,44 @@
 import pygame
 from pygame.locals import *
-import camera, settings, state, thing, grid
+import camera, settings, state, thing, grid, control
 
 pygame.init()
 camera.init()
 thing.init()
-
-def handlemouse(pos):
-	if settings.controlscheme == "rando":
-		thing.growrandom()
 
 clock = pygame.time.Clock()
 playing = True
 font = pygame.font.Font(None, 24)
 while playing:
 	dt = 0.001 * clock.tick()
+	mstate = {
+		"pos": pygame.mouse.get_pos(),
+		"down": False,
+		"up": False,
+	}
+	kstate = {
+		"pressed": pygame.key.get_pressed(),
+		"down": set(),
+	}
 	for event in pygame.event.get():
 		if event.type == QUIT:
 			playing = False
 		if event.type == KEYDOWN:
+			kstate["down"].add(event.key)
 			if event.key == K_ESCAPE:
 				playing = False
-			if event.key == K_1:
-				camera.zoom(-1)
-			if event.key == K_2:
-				camera.zoom(1)
 		if event.type == MOUSEBUTTONDOWN:
-			handlemouse(pygame.mouse.get_pos())
-	ks = pygame.key.get_pressed()
-	dkx = (ks[K_RIGHT] | ks[K_d] | ks[K_e]) - (ks[K_LEFT] | ks[K_a])
-	dky = (ks[K_UP] | ks[K_w] | ks[K_COMMA]) - (ks[K_DOWN] | ks[K_s] | ks[K_o])
-	camera.scoot((dkx * dt, dky * dt))
-
+			mstate["down"] = True
+		if event.type == MOUSEBUTTONUP:
+			mstate["up"] = True
+	control.think(dt, mstate, kstate)
 	camera.think(dt)
-
 	camera.draw()
 	for t in state.things:
 		t.draw()
+	camera.drawpanel()
 
-	mposV = pygame.mouse.get_pos()
+	mposV = mstate["pos"]
 	mposG = camera.GconvertV(mposV)
 	mposH = grid.HconvertG(mposG)
 	lines = [

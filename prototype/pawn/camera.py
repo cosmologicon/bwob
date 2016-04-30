@@ -52,6 +52,8 @@ def draw():
 	screen.fill((10, 10, 10), grectV)
 	for p0G, p1G in grid.GedgeswithinG((xminG, yminG, xmaxG, ymaxG)):
 		pygame.draw.line(screen, (100, 50, 0), VconvertG(p0G), VconvertG(p1G), 1)
+
+def drawpanel():
 	screen.fill((200, 160, 200), prectV)
 
 

@@ -3,6 +3,7 @@ import camera, grid, state, settings
 
 
 class Part(object):
+	occupiestile = False
 	def __init__(self, pH):
 		self.pH = pH
 		self.pG = grid.GconvertH(pH)
@@ -15,6 +16,8 @@ class Part(object):
 			edgeH, pH = self.odgeH
 			state.edgesH[edgeH] = self
 		state.things.append(self)
+		if self.occupiestile:
+			state.tilesH[self.pH] = self
 		for pH, child in self.children.items():
 			child.addtostate()
 
@@ -29,6 +32,8 @@ class Part(object):
 		if self.odgeH:
 			edgeH, pH = self.odgeH
 			state.edgesH[edgeH] = None
+			if self.occupiestile:
+				state.tilesH[pH] = self
 
 	def randomstem(self):
 		return random.choice(self.children.values()).randomstem()
@@ -37,9 +42,16 @@ class Part(object):
 		if not all(child.canplace(toreplace) for child in self.children.values()):
 			return False
 		obj = state.edgesH.get(self.odgeH[0])
-		return obj is None or obj in (toreplace or [])
+		if obj is not None and obj not in (toreplace or []):
+			return False
+		if self.occupiestile:
+			obj = state.tilesH.get(self.odgeH[1])
+			if obj is not None and obj not in (toreplace or []):
+				return False
+		return True
 
 class Core(Part):
+	occupiestile = True
 	def __init__(self):
 		Part.__init__(self, (0, 0))
 		colors = 0, 1, 2, 0, 1, 2
@@ -92,6 +104,9 @@ class Stem(Part):
 	def tostalk(self, branchspec):
 		return Stalk(self.odgeH, self.color, self.parent, branchspec)
 
+	def toorgan(self, label):
+		return Organ(self.odgeH, self.color, self.parent, label)
+
 	def draw(self):
 		wV = max(1, int(0.2 * camera.VscaleG))
 		wborderV = 2 + wV + int(0.06 * camera.VscaleG)
@@ -119,17 +134,54 @@ class Stalk(Part):
 			pygame.draw.lines(camera.screen, (0, 0, 0), False, psV, wborderV)
 			pygame.draw.lines(camera.screen, settings.colors[self.color], False, psV, wV)
 
+class Organ(Part):
+	occupiestile = True
+	def __init__(self, odgeH, color, parent, label):
+		edgeH, pH = odgeH
+		Part.__init__(self, pH)
+		self.odgeH = odgeH
+		self.color = color
+		self.parent = parent
+		self.label = label
+
+	def randomstem(self):
+		return None
+
+	def draw(self):
+		wV = max(1, int(0.2 * camera.VscaleG))
+		wborderV = 2 + wV + int(0.06 * camera.VscaleG)
+		rV = max(1, int(0.5 * camera.VscaleG))
+		routV = 1 + rV + int(0.04 * camera.VscaleG)
+		p0V = camera.VconvertG(grid.GconvertH(self.odgeH[0]))
+		p1V = camera.VconvertG(grid.GconvertH(self.odgeH[1]))
+		pygame.draw.line(camera.screen, (0, 0, 0), p0V, p1V, wborderV)
+		pygame.draw.circle(camera.screen, (0, 0, 0), p1V, routV, 0)
+		pygame.draw.line(camera.screen, settings.colors[self.color], p0V, p1V, wV)
+		pygame.draw.circle(camera.screen, settings.colors[self.color], p1V, rV, 0)
+		fontsize = max(2, int(0.8 * camera.VscaleG))
+		font = pygame.font.Font(None, fontsize)
+		surf = font.render(self.label, True, (0, 0, 0))
+		camera.screen.blit(surf, surf.get_rect(center = p1V))
+		
+
 branchspecs = (1,), (2,), (3,), (4,), (5,), (1,3), (1,4), (2,3), (2,4), (2,5), (3,4), (3,5)
 
 def growrandom():
-	stem = state.core.randomstem()
 	for _ in range(20):
-		branchspec = random.choice(branchspecs)
-		stalk = stem.tostalk(branchspec)
-		if stalk.canplace([stem]):
+		stem = state.core.randomstem()
+		if stem:
+			break
+	if not stem:
+		return
+	for _ in range(20):
+		if random.random() < 0.1:
+			part = stem.toorgan(random.choice("WXYZ"))
+		else:
+			part = stem.tostalk(random.choice(branchspecs))
+		if part.canplace([stem]):
 			stem.removefromstate()
-			stalk.addtostate()
-			stalk.attachtoparent()
+			part.addtostate()
+			part.attachtoparent()
 			break
 
 def init():
