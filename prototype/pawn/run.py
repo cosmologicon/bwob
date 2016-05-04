@@ -1,4 +1,4 @@
-import pygame
+import pygame, datetime
 from pygame.locals import *
 import camera, settings, state, thing, grid, control
 
@@ -65,4 +65,7 @@ while playing:
 		img = font.render(line, True, (255, 255, 255))
 		camera.screen.blit(img, (10, camera.screen.get_height() - 24 * (len(lines) - j)))
 	pygame.display.flip()
+	if K_F12 in kstate["down"]:
+		filename = "screenshot-%s.png" % datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+		pygame.image.save(camera.screen, filename)
 

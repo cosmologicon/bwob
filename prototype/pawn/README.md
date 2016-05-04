@@ -10,12 +10,14 @@ Controls
     Tab: switch control scheme
     Arrows or WASD: pan
     1/2: zoom
+    F12: screenshot
 
 Control scheme rando
 --------------------
 
 	Left-click in gameplay area: place random part
 	Right-click in gameplay area: place 10 random parts
+	Middle-click in gameplay area: place 100 random parts
 
 Placing a part might fail, because it randomly picks a place where no part can grow. In this case
 no part will be placed.
