@@ -7,7 +7,36 @@ def GconvertH((xH, yH)):
 def HconvertG((xG, yG)):
 	return int(round(4 * xG)), int(round(-2 * xG + 4*s * yG))
 def HnearesthexH((xH, yH)):
-	return int(round(xH / 6)) * 6, int(round(yH / 6)) * 6
+	x0H, dxH = divmod(xH / 6, 1)
+	y0H, dyH = divmod(yH / 6, 1)
+	A, B, C = dxH - dyH, dxH + 2 * dyH, 2 * dxH + dyH
+	if B < 1 > C:
+		dxH, dyH = 0, 0
+	elif B > 2 < C:
+		dxH, dyH = 1, 1
+	elif A > 0:
+		dxH, dyH = 1, 0
+	else:
+		dxH, dyH = 0, 1
+	return 6 * int(round(x0H + dxH)), 6 * int(round(y0H + dyH))
+def HnearestedgeH((xH, yH)):
+	x0H, dxH = divmod(xH / 6, 1)
+	y0H, dyH = divmod(yH / 6, 1)
+	A, B, C = dxH - dyH, dxH + 2 * dyH, 2 * dxH + dyH
+	if B > 2 or C > 2:
+		if A > 0:
+			dxH, dyH = 1, 0.5
+		else:
+			dxH, dyH = 0.5, 1
+	elif B < 1 or C < 1:
+		if A > 0:
+			dxH, dyH = 0.5, 0
+		else:
+			dxH, dyH = 0, 0.5
+	else:
+		dxH, dyH = 0.5, 0.5
+	return int(round(6 * (x0H + dxH))), int(round(6 * (y0H + dyH)))
+
 
 def GedgeswithinG((x0G, y0G, x1G, y1G)):
 	pcornerHs = [HnearesthexH(HconvertG((xG, yG))) for xG in (x0G, x1G) for yG in (y0G, y1G)]
@@ -21,6 +50,9 @@ def GedgeswithinG((x0G, y0G, x1G, y1G)):
 			pGs = [GconvertH((xH + dxH, yH + dyH)) for dxH, dyH in dHs]
 			for j in range(3):
 				yield pGs[j], pGs[j + 1]
+def GnearestedgeG(pG):
+	return GconvertH(HnearestedgeH(HconvertG(pG)))
+
 
 def GbezierG(((x0G, y0G), (x1G, y1G), (x2G, y2G), (x3G, y3G)), N = 20):
 	curve = []

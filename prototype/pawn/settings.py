@@ -8,7 +8,8 @@ gx = 640
 zoom0 = 40
 zoomrange = -1, 1
 
-controlscheme = "rando"
+controlschemes = "rando", "tetris"
+controlscheme = "tetris"
 
 
 colors = [

@@ -13,8 +13,13 @@ while playing:
 	dt = 0.001 * clock.tick()
 	mstate = {
 		"pos": pygame.mouse.get_pos(),
-		"down": False,
-		"up": False,
+		"ldown": False,
+		"lup": False,
+		"mdown": False,
+		"mup": False,
+		"rdown": False,
+		"rup": False,
+		"wheel": 0,
 	}
 	kstate = {
 		"pressed": pygame.key.get_pressed(),
@@ -28,15 +33,23 @@ while playing:
 			if event.key == K_ESCAPE:
 				playing = False
 		if event.type == MOUSEBUTTONDOWN:
-			mstate["down"] = True
+			if 0 <= event.button <= 3:
+				mstate[" lmr"[event.button] + "down"] = True
+			elif event.button == 4:
+				mstate["wheel"] += 1
+			elif event.button == 5:
+				mstate["wheel"] -= 1
 		if event.type == MOUSEBUTTONUP:
-			mstate["up"] = True
+			if 0 <= event.button <= 3:
+				mstate[" lmr"[event.button] + "up"] = True
 	control.think(dt, mstate, kstate)
 	camera.think(dt)
 	camera.draw()
 	for t in state.things:
 		t.draw()
+	control.drawgame()
 	camera.drawpanel()
+	control.drawpanel()
 
 	mposV = mstate["pos"]
 	mposG = camera.GconvertV(mposV)

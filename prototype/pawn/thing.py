@@ -50,6 +50,9 @@ class Part(object):
 				return False
 		return True
 
+	def canattach(self, part):
+		return False
+
 class Core(Part):
 	occupiestile = True
 	def __init__(self):
@@ -58,12 +61,13 @@ class Core(Part):
 		for color, odgeH in zip(colors, grid.HhexodgesH(self.pH)):
 			self.children[odgeH] = Stem(odgeH, color, self)
 
-	def draw(self):
-		centerV = camera.VconvertG(self.pG)
-		rV = int(0.8 * camera.VscaleG)
+	def draw(self, view = None):
+		view = view or camera
+		centerV = view.VconvertG(self.pG)
+		rV = int(0.8 * view.VscaleG)
 		pygame.draw.circle(camera.screen, (200, 200, 200), centerV, rV)
 
-def VstempsH(odgeH, bend):
+def VstempsH(odgeH, bend, view):
 	edgeH, centerH = odgeH
 	x0G, y0G = grid.GconvertH(edgeH)
 	x1G, y1G = grid.GconvertH(centerH)
@@ -71,9 +75,9 @@ def VstempsH(odgeH, bend):
 	dxG, dyG = f * (x1G - x0G), f * (y1G - y0G)
 	S, C = math.sin(bend), math.cos(bend)
 	dxG, dyG = C * dxG + S * dyG, -S * dxG + C * dyG
-	return camera.VconvertG((x0G, y0G)), camera.VconvertG((x0G + dxG, y0G + dyG))
+	return view.VconvertG((x0G, y0G)), view.VconvertG((x0G + dxG, y0G + dyG))
 
-def VstalkpsH(odge0H, odge1H, bend):
+def VstalkpsH(odge0H, odge1H, bend, view):
 	x0G, y0G = grid.GconvertH(odge0H[0])
 	x1G, y1G = grid.GconvertH(odge0H[1])
 	x2G, y2G = grid.GconvertH(odge1H[0])
@@ -87,7 +91,7 @@ def VstalkpsH(odge0H, odge1H, bend):
 	dx2G, dy2G = a2 * (C * dx2G + S * dy2G), a2 * (-S * dx2G + C * dy2G)
 
 	anchorsG = (x0G, y0G), (x0G + dx1G, y0G + dy1G), (x2G - dx2G, y2G - dy2G), (x2G, y2G)
-	return map(camera.VconvertG, grid.GbezierG(anchorsG))
+	return map(view.VconvertG, grid.GbezierG(anchorsG))
 
 
 class Stem(Part):
@@ -107,10 +111,19 @@ class Stem(Part):
 	def toorgan(self, label):
 		return Organ(self.odgeH, self.color, self.parent, label)
 
-	def draw(self):
-		wV = max(1, int(0.2 * camera.VscaleG))
-		wborderV = 2 + wV + int(0.06 * camera.VscaleG)
-		p0V, p1V = VstempsH(self.odgeH, settings.bends[self.color])
+	def canattach(self, part):
+		if part.color != self.color:
+			return False
+		apart = part.attachtostem(self)
+		if not apart.canplace([self]):
+			return False
+		return True
+
+	def draw(self, view = None):
+		view = view or camera
+		wV = max(1, int(0.2 * view.VscaleG))
+		wborderV = 2 + wV + int(0.06 * view.VscaleG)
+		p0V, p1V = VstempsH(self.odgeH, settings.bends[self.color], view)
 		pygame.draw.line(camera.screen, (0, 0, 0), p0V, p1V, wborderV)
 		pygame.draw.line(camera.screen, settings.colors[self.color], p0V, p1V, wV)
 
@@ -126,11 +139,15 @@ class Stalk(Part):
 			sodgeH = grid.HpathodgeH(self.odgeH, nrot)
 			self.children[sodgeH] = Stem(sodgeH, self.color, self)
 
-	def draw(self):
-		wV = max(1, int(0.2 * camera.VscaleG))
-		wborderV = 2 + wV + int(0.06 * camera.VscaleG)
+	def attachtostem(self, stem):
+		return stem.tostalk(self.branchspec)
+
+	def draw(self, view = None):
+		view = view or camera
+		wV = max(1, int(0.2 * view.VscaleG))
+		wborderV = 2 + wV + int(0.06 * view.VscaleG)
 		for sodgeH in sorted(self.children):
-			psV = VstalkpsH(self.odgeH, sodgeH, settings.bends[self.color])
+			psV = VstalkpsH(self.odgeH, sodgeH, settings.bends[self.color], view)
 			pygame.draw.lines(camera.screen, (0, 0, 0), False, psV, wborderV)
 			pygame.draw.lines(camera.screen, settings.colors[self.color], False, psV, wV)
 
@@ -147,24 +164,43 @@ class Organ(Part):
 	def randomstem(self):
 		return None
 
-	def draw(self):
-		wV = max(1, int(0.2 * camera.VscaleG))
-		wborderV = 2 + wV + int(0.06 * camera.VscaleG)
-		rV = max(1, int(0.5 * camera.VscaleG))
-		routV = 1 + rV + int(0.04 * camera.VscaleG)
-		p0V = camera.VconvertG(grid.GconvertH(self.odgeH[0]))
-		p1V = camera.VconvertG(grid.GconvertH(self.odgeH[1]))
+	def attachtostem(self, stem):
+		return stem.toorgan(self.label)
+
+	def draw(self, view = None):
+		view = view or camera
+		wV = max(1, int(0.2 * view.VscaleG))
+		wborderV = 2 + wV + int(0.06 * view.VscaleG)
+		rV = max(1, int(0.5 * view.VscaleG))
+		routV = 1 + rV + int(0.04 * view.VscaleG)
+		p0V = view.VconvertG(grid.GconvertH(self.odgeH[0]))
+		p1V = view.VconvertG(grid.GconvertH(self.odgeH[1]))
 		pygame.draw.line(camera.screen, (0, 0, 0), p0V, p1V, wborderV)
 		pygame.draw.circle(camera.screen, (0, 0, 0), p1V, routV, 0)
 		pygame.draw.line(camera.screen, settings.colors[self.color], p0V, p1V, wV)
 		pygame.draw.circle(camera.screen, settings.colors[self.color], p1V, rV, 0)
-		fontsize = max(2, int(0.8 * camera.VscaleG))
+		fontsize = max(2, int(0.8 * view.VscaleG))
 		font = pygame.font.Font(None, fontsize)
 		surf = font.render(self.label, True, (0, 0, 0))
 		camera.screen.blit(surf, surf.get_rect(center = p1V))
-		
 
 branchspecs = (1,), (2,), (3,), (4,), (5,), (1,3), (1,4), (2,3), (2,4), (2,5), (3,4), (3,5)
+
+def randompart():
+	color = random.choice([0, 1, 2])
+	odgeH = (0, -3), (0, 0)
+	if random.random() < 0.1:
+		label = random.choice("WXYZ")
+		return Organ(odgeH, color, None, label)
+	else:
+		branchspec = random.choice(branchspecs)
+		return Stalk(odgeH, color, None, branchspec)
+
+def grow(stem, part):
+	part = part.attachtostem(stem)
+	stem.removefromstate()
+	part.addtostate()
+	part.attachtoparent()
 
 def growrandom():
 	for _ in range(20):
@@ -174,15 +210,12 @@ def growrandom():
 	if not stem:
 		return
 	for _ in range(20):
-		if random.random() < 0.1:
-			part = stem.toorgan(random.choice("WXYZ"))
-		else:
-			part = stem.tostalk(random.choice(branchspecs))
-		if part.canplace([stem]):
-			stem.removefromstate()
-			part.addtostate()
-			part.attachtoparent()
+		part = randompart()
+		if stem.canattach(part):
+			grow(stem, part)
 			break
+
+		
 
 def init():
 	state.core = Core()
