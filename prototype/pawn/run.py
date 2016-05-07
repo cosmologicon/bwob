@@ -6,6 +6,7 @@ import camera, settings, state, thing, grid, control
 pygame.init()
 camera.init()
 thing.init()
+pygame.display.set_caption("Prototype: pawn")
 
 clock = pygame.time.Clock()
 playing = True

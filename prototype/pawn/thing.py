@@ -209,7 +209,7 @@ class Starget(object):
 		xG, yG = self.pG
 		dG = 0.6
 		psG = [
-			(xG + dG * math.sin(a), yG + dG * math.cos(a))
+			(xG + dG * math.sin(a), yG +	 dG * math.cos(a))
 			for a in [2 * j * math.tau / 5 for j in range(5)]
 		]
 		psV = map(camera.VconvertG, psG)
@@ -219,15 +219,23 @@ class Starget(object):
 
 branchspecs = (1,), (2,), (3,), (4,), (5,), (1,3), (1,4), (2,3), (2,4), (2,5), (3,4), (3,5)
 
-def randompart():
-	color = random.choice([0, 1, 2])
+def randomorgan(color = None):
+	if color is None:
+		color = random.choice([0, 1, 2])
 	odgeH = (0, -3), (0, 0)
+	label = random.choice("WXYZ")
+	return Organ(odgeH, color, None, label)
+def randomstalk(color = None):
+	if color is None:
+		color = random.choice([0, 1, 2])
+	odgeH = (0, -3), (0, 0)
+	branchspec = random.choice(branchspecs)
+	return Stalk(odgeH, color, None, branchspec)
+def randompart(color = None):
 	if random.random() < 0.1:
-		label = random.choice("WXYZ")
-		return Organ(odgeH, color, None, label)
+		return randomorgan(color)
 	else:
-		branchspec = random.choice(branchspecs)
-		return Stalk(odgeH, color, None, branchspec)
+		return randomstalk(color)
 
 def randomstarget(d):
 	while True:

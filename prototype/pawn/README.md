@@ -31,3 +31,14 @@ white circles.
 	Left-click in gameplay area: place current part
 	Left-click in panel area: trash current part
 
+Control scheme pyweek
+---------------------
+
+Nine parts (three of each color) are available at any given time. The selected part, if any,
+appears with a white circle behind it. Places where selected part can go are shown with white
+circles, as with the tetris control scheme.
+
+	Left-click in gameplay area: place selected part
+	Left-click in panel area: select part
+	Right-click in panel area: recycle part
+

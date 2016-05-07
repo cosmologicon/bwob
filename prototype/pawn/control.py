@@ -1,12 +1,32 @@
-import pygame
+from __future__ import division
+import pygame, math
 from pygame.locals import *
 import thing, camera, settings, state, grid
 
 
 def clear():
-	global cursor
+	global cursor, available
 	# Currently selected part, if any
 	cursor = None
+	if settings.controlscheme == "pyweek":
+		available = [None] * 9
+		for a in range(9):
+			fillslot(a)
+adsG = [(1.4 * dx, 0.9 * dy) for dx, dy in (-1,5),(1,5),(0,3),(-1,1),(1,1),(0,-1),(-1,-3),(1,-3),(0,-5)]
+def fillslot(a):
+	color, j = divmod(a, 3)
+	available[a] = thing.randomorgan(color = color) if j == 2 else thing.randomstalk(color = color)
+def availableat((xV, yV)):
+	wV, hV = camera.prectV.size
+	x0V, y0V = camera.prectV.center
+	VscaleG = int(min(wV, hV) * 0.2)
+	xG = (xV - x0V) / VscaleG
+	yG = -(yV - y0V) / VscaleG
+	for (axG, ayG), part in zip(adsG, available):
+		dG = math.sqrt((xG - axG) ** 2 + (yG - ayG) ** 2)
+		if dG < 0.9:
+			return part
+	return None
 clear()
 
 def think(dt, mstate, kstate):
@@ -50,6 +70,22 @@ def think(dt, mstate, kstate):
 				cursor = None
 		if mstate["ldown"] and inpanel:
 			cursor = None
+	if settings.controlscheme == "pyweek":
+		if (mstate["ldown"] or mstate["lup"]) and ingame and cursor:
+			stem = state.edgesH.get(grid.HnearestedgeH(mposH))
+			if stem and stem.canattach(cursor):
+				thing.grow(stem, cursor)
+				for j, part in enumerate(available):
+					if part is cursor:
+						fillslot(j)
+				cursor = None
+		if mstate["ldown"] and inpanel:
+			part = availableat(mposV)
+			cursor = None if part is cursor else part
+		if mstate["rdown"] and inpanel:
+			part = availableat(mposV)
+			if part:
+				fillslot(available.index(part))
 
 def drawgame():
 	if cursor is not None:
@@ -64,11 +100,25 @@ def drawpanel():
 	if settings.controlscheme == "tetris":
 		wV, hV = camera.prectV.size
 		x0V, y0V = camera.prectV.center
-		scale = int(min(wV, hV) * 0.2)
+		scale = int(min(wV, hV) * 0.18)
 		class view:
 			VscaleG = scale
 			def VconvertG(self, (xG, yG)):
 				return x0V + int(scale * xG), y0V - int(scale * yG)
 		if cursor is not None:
 			cursor.draw(view())
+	if settings.controlscheme == "pyweek":
+		wV, hV = camera.prectV.size
+		x0V, y0V = camera.prectV.center
+		scale = int(min(wV, hV) * 0.2)
+		class view:
+			VscaleG = scale
+			def VconvertG(self, (xG, yG)):
+				return x0V + int(scale * (xG + dxG)), y0V - int(scale * (yG + dyG))
+		for (dxG, dyG), part in zip(adsG, available):
+			if part is cursor:
+				rV = int(view.VscaleG * 0.9)
+				pygame.draw.circle(camera.screen, (255, 255, 255), view().VconvertG((0, 0)), rV, 2)
+			part.draw(view())
+			
 
