@@ -184,6 +184,39 @@ class Organ(Part):
 		surf = font.render(self.label, True, (0, 0, 0))
 		camera.screen.blit(surf, surf.get_rect(center = p1V))
 
+class Starget(object):
+	def __init__(self, pH, color):
+		self.pH = pH
+		self.odgeH = None
+		self.pG = grid.GconvertH(self.pH)
+		self.color = color
+		self.color0 = [int(0.5 * a) for a in settings.colors[color]]
+		self.color1 = [min(int(1.5 * a), 255) for a in settings.colors[color]]
+	def addtostate(self):
+		state.tilesH[self.pH] = self
+		state.things.append(self)
+	def canplace(self, objs=[]):
+		return self.pH not in state.tilesH or state.tilesH[self.pH] in objs
+	def think(self, dt):
+		pass
+	def isactive(self):
+		for pH in grid.HhexedgesH(self.pH):
+			part = state.edgesH.get(pH)
+			if part and (part.pH, part.color) == (self.pH, self.color):
+				return True
+		return False
+	def draw(self):
+		xG, yG = self.pG
+		dG = 0.6
+		psG = [
+			(xG + dG * math.sin(a), yG + dG * math.cos(a))
+			for a in [2 * j * math.tau / 5 for j in range(5)]
+		]
+		psV = map(camera.VconvertG, psG)
+		wV = max(1, int(0.02 * camera.VscaleG))
+		color = self.color1 if self.isactive() else self.color0
+		pygame.draw.lines(camera.screen, color, True, psV, wV)
+
 branchspecs = (1,), (2,), (3,), (4,), (5,), (1,3), (1,4), (2,3), (2,4), (2,5), (3,4), (3,5)
 
 def randompart():
@@ -195,6 +228,14 @@ def randompart():
 	else:
 		branchspec = random.choice(branchspecs)
 		return Stalk(odgeH, color, None, branchspec)
+
+def randomstarget(d):
+	while True:
+		x, y = random.randint(-d, d), random.randint(-d, d)
+		if -d <= x + y <= d:
+			break
+	color = random.choice([0, 1, 2])
+	return Starget((6 * x, 6 * y), color)
 
 def grow(stem, part):
 	part = part.attachtostem(stem)
@@ -215,9 +256,11 @@ def growrandom():
 			grow(stem, part)
 			break
 
-		
-
 def init():
 	state.core = Core()
 	state.core.addtostate()
+	for _ in range(80):
+		starget = randomstarget(30)
+		if starget.canplace():
+			starget.addtostate()
 

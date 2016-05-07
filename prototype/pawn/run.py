@@ -1,5 +1,6 @@
-import pygame, datetime
+import pygame, datetime, math
 from pygame.locals import *
+math.tau = 2 * math.pi
 import camera, settings, state, thing, grid, control
 
 pygame.init()

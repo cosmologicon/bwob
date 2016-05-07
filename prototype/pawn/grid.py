@@ -71,6 +71,9 @@ def GbezierH(psH, N = 20):
 edgedsH = (3, 0), (0, 3), (-3, 3), (-3, 0), (0, -3), (3, -3)
 vertexdsH = (2, 2), (-2, 4), (-4, 2), (-2, -2), (2, -4), (4, -2)
 
+def HhexedgesH((xH, yH)):
+	for dxH, dyH in edgedsH:
+		yield xH + dxH, yH + dyH
 # An odge (oriented edge) is an edge along with one of its two orientations. Its position is given
 # by a pair of H-points (edgeH, tileH), which are the position of the edge itself, and the tile that
 # the odge is pointing INTO.
