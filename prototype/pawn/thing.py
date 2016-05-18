@@ -233,8 +233,6 @@ class Starget(object):
 		color = self.color1 if self.isactive() else self.color0
 		pygame.draw.lines(camera.screen, color, True, psV, wV)
 
-branchspecs = (1,), (2,), (3,), (4,), (5,), (1,3), (1,4), (2,3), (2,4), (2,5), (3,4), (3,5)
-
 def randomorgan(color = None):
 	if color is None:
 		color = random.choice([0, 1, 2])
@@ -245,7 +243,7 @@ def randomstalk(color = None):
 	if color is None:
 		color = random.choice([0, 1, 2])
 	odgeH = (0, -3), (0, 0)
-	branchspec = random.choice(branchspecs)
+	branchspec = random.choice(settings.branchspecs)
 	return Stalk(odgeH, color, None, branchspec)
 def randompart(color = None):
 	if random.random() < 0.1:
