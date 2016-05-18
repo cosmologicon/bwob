@@ -4,6 +4,7 @@ import camera, grid, state, settings
 
 class Part(object):
 	occupiestile = False
+	canaxe = False
 	def __init__(self, pH):
 		self.pH = pH
 		self.pG = grid.GconvertH(pH)
@@ -52,6 +53,13 @@ class Part(object):
 
 	def canattach(self, part):
 		return False
+
+	def drawdot(self, color, view = None):
+		view = view or camera
+		rV = max(1, int(0.25 * view.VscaleG))
+		wV = max(1, int(0.05 * view.VscaleG))
+		pV = view.VconvertG(grid.GconvertH(self.odgeH[0]))
+		pygame.draw.circle(camera.screen, color, pV, rV, wV)
 
 class Core(Part):
 	occupiestile = True
@@ -128,6 +136,7 @@ class Stem(Part):
 		pygame.draw.line(camera.screen, settings.colors[self.color], p0V, p1V, wV)
 
 class Stalk(Part):
+	canaxe = True
 	def __init__(self, odgeH, color, parent, branchspec):
 		edgeH, pH = odgeH
 		Part.__init__(self, pH)
@@ -138,6 +147,9 @@ class Stalk(Part):
 		for nrot in branchspec:
 			sodgeH = grid.HpathodgeH(self.odgeH, nrot)
 			self.children[sodgeH] = Stem(sodgeH, self.color, self)
+
+	def tostem(self):
+		return Stem(self.odgeH, self.color, self.parent)
 
 	def attachtostem(self, stem):
 		return stem.tostalk(self.branchspec)
@@ -153,6 +165,7 @@ class Stalk(Part):
 
 class Organ(Part):
 	occupiestile = True
+	canaxe = True
 	def __init__(self, odgeH, color, parent, label):
 		edgeH, pH = odgeH
 		Part.__init__(self, pH)
@@ -166,6 +179,9 @@ class Organ(Part):
 
 	def attachtostem(self, stem):
 		return stem.toorgan(self.label)
+
+	def tostem(self):
+		return Stem(self.odgeH, self.color, self.parent)
 
 	def draw(self, view = None):
 		view = view or camera
@@ -250,6 +266,11 @@ def grow(stem, part):
 	stem.removefromstate()
 	part.addtostate()
 	part.attachtoparent()
+def axe(part):
+	stem = part.tostem()
+	part.removefromstate()
+	stem.addtostate()
+	stem.attachtoparent()
 
 def growrandom():
 	for _ in range(20):

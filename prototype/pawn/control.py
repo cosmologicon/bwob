@@ -1,7 +1,7 @@
 from __future__ import division
 import pygame, math
 from pygame.locals import *
-import thing, camera, settings, state, grid
+import thing, camera, settings, state, grid, buttons
 
 
 def clear():
@@ -52,26 +52,47 @@ def think(dt, mstate, kstate):
 	inpanel = camera.prectV.collidepoint(mposV)
 
 	if settings.controlscheme == "rando":
-		if mstate["ldown"] and ingame:
+		if mstate["ldown"] and buttons.axe.contains(mposV):
+			cursor = None if cursor is buttons.axe else buttons.axe
+		elif mstate["ldown"] and cursor is buttons.axe:
+			part = state.edgesH.get(grid.HnearestedgeH(mposH))
+			if part and part.canaxe:
+				thing.axe(part)
+			cursor = None
+		elif mstate["ldown"] and ingame:
 			thing.growrandom()
-		if mstate["mdown"] and ingame:
+		elif mstate["mdown"] and ingame:
 			for _ in range(100):
 				thing.growrandom()
-		if mstate["rdown"] and ingame:
+		elif mstate["rdown"] and ingame:
 			for _ in range(10):
 				thing.growrandom()
 	if settings.controlscheme == "tetris":
+		if mstate["ldown"] and buttons.axe.contains(mposV):
+			cursor = None if cursor is buttons.axe else buttons.axe
+		elif mstate["ldown"] and cursor is buttons.axe:
+			part = state.edgesH.get(grid.HnearestedgeH(mposH))
+			if part and part.canaxe:
+				thing.axe(part)
+			cursor = None
 		if cursor is None:
 			cursor = thing.randompart()
-		if mstate["ldown"] and ingame and cursor:
+		elif mstate["ldown"] and ingame and cursor:
 			stem = state.edgesH.get(grid.HnearestedgeH(mposH))
 			if stem and stem.canattach(cursor):
 				thing.grow(stem, cursor)
 				cursor = None
-		if mstate["ldown"] and inpanel:
+		elif mstate["ldown"] and inpanel:
 			cursor = None
 	if settings.controlscheme == "pyweek":
-		if (mstate["ldown"] or mstate["lup"]) and ingame and cursor:
+		if mstate["ldown"] and buttons.axe.contains(mposV):
+			cursor = None if cursor is buttons.axe else buttons.axe
+		elif mstate["ldown"] and cursor is buttons.axe:
+			part = state.edgesH.get(grid.HnearestedgeH(mposH))
+			if part and part.canaxe:
+				thing.axe(part)
+			cursor = None
+		elif (mstate["ldown"] or mstate["lup"]) and ingame and cursor:
 			stem = state.edgesH.get(grid.HnearestedgeH(mposH))
 			if stem and stem.canattach(cursor):
 				thing.grow(stem, cursor)
@@ -79,33 +100,36 @@ def think(dt, mstate, kstate):
 					if part is cursor:
 						fillslot(j)
 				cursor = None
-		if mstate["ldown"] and inpanel:
+		elif mstate["ldown"] and inpanel:
 			part = availableat(mposV)
 			cursor = None if part is cursor else part
-		if mstate["rdown"] and inpanel:
+		elif mstate["rdown"] and inpanel:
 			part = availableat(mposV)
 			if part:
 				fillslot(available.index(part))
 
 def drawgame():
-	if cursor is not None:
-		rV = max(1, int(0.25 * camera.VscaleG))
-		wV = max(1, int(0.05 * camera.VscaleG))
+	if cursor is None:
+		pass
+	elif cursor in [buttons.axe]:
+		for thing in state.things:
+			if thing.odgeH and thing.canaxe:
+				thing.drawdot((255, 100, 100))
+	else:
 		for thing in state.things:
 			if thing.odgeH and thing.canattach(cursor):
-				pV = camera.VconvertG(grid.GconvertH(thing.odgeH[0]))
-				pygame.draw.circle(camera.screen, (255, 255, 255), pV, rV, wV)
+				thing.drawdot((255, 255, 255))
 
 def drawpanel():
 	if settings.controlscheme == "tetris":
-		wV, hV = camera.prectV.size
-		x0V, y0V = camera.prectV.center
-		scale = int(min(wV, hV) * 0.18)
-		class view:
-			VscaleG = scale
-			def VconvertG(self, (xG, yG)):
-				return x0V + int(scale * xG), y0V - int(scale * yG)
-		if cursor is not None:
+		if cursor not in [None, buttons.axe]:
+			wV, hV = camera.prectV.size
+			x0V, y0V = camera.prectV.center
+			scale = int(min(wV, hV) * 0.18)
+			class view:
+				VscaleG = scale
+				def VconvertG(self, (xG, yG)):
+					return x0V + int(scale * xG), y0V - int(scale * yG)
 			cursor.draw(view())
 	if settings.controlscheme == "pyweek":
 		wV, hV = camera.prectV.size
@@ -120,5 +144,6 @@ def drawpanel():
 				rV = int(view.VscaleG * 0.9)
 				pygame.draw.circle(camera.screen, (255, 255, 255), view().VconvertG((0, 0)), rV, 2)
 			part.draw(view())
-			
+	for button in [buttons.axe]:
+		button.draw()
 
