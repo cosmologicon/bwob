@@ -2,6 +2,20 @@ import pygame, random, math
 import camera, grid, state, settings
 
 
+def drawdotG(pG, rG, color, view = None):
+	view = view or camera
+	rV = max(1, int(rG * view.VscaleG))
+	wV = max(1, int(0.2 * rG * view.VscaleG))
+	pV = view.VconvertG(pG)
+	pygame.draw.circle(camera.screen, color, pV, rV, wV)
+
+def drawwithborder(psV, color, wG, view = None):
+	view = view or camera
+	wV = max(1, int(wG * view.VscaleG))
+	wborderV = 2 + wV + int(0.06 * view.VscaleG)
+	pygame.draw.lines(camera.screen, (0, 0, 0), False, psV, wborderV)
+	pygame.draw.lines(camera.screen, color, False, psV, wV)
+
 class Part(object):
 	occupiestile = False
 	canaxe = False
@@ -55,11 +69,7 @@ class Part(object):
 		return False
 
 	def drawdot(self, color, view = None):
-		view = view or camera
-		rV = max(1, int(0.25 * view.VscaleG))
-		wV = max(1, int(0.05 * view.VscaleG))
-		pV = view.VconvertG(grid.GconvertH(self.odgeH[0]))
-		pygame.draw.circle(camera.screen, color, pV, rV, wV)
+		drawdotG(grid.GconvertH(self.odgeH[0]), 0.25, color, view)
 
 class Core(Part):
 	occupiestile = True
@@ -85,13 +95,9 @@ def VstempsH(odgeH, bend, view):
 	dxG, dyG = C * dxG + S * dyG, -S * dxG + C * dyG
 	return view.VconvertG((x0G, y0G)), view.VconvertG((x0G + dxG, y0G + dyG))
 
-def VstalkpsH(odge0H, odge1H, bend, view):
-	x0G, y0G = grid.GconvertH(odge0H[0])
-	x1G, y1G = grid.GconvertH(odge0H[1])
-	x2G, y2G = grid.GconvertH(odge1H[0])
-	x3G, y3G = grid.GconvertH(odge1H[1])
-
-	dx1G, dy1G = x1G - x0G, y1G - y0G
+def VbezierpsG((x0G, y0G), (x1G, y1G), (x2G, y2G), (x3G, y3G), bend, view):
+	view = view or camera
+ 	dx1G, dy1G = x1G - x0G, y1G - y0G
 	dx2G, dy2G = x3G - x2G, y3G - y2G
 	a1, a2 = 0.7, 0.4
 	S, C = math.sin(bend), math.cos(bend)
@@ -100,6 +106,16 @@ def VstalkpsH(odge0H, odge1H, bend, view):
 
 	anchorsG = (x0G, y0G), (x0G + dx1G, y0G + dy1G), (x2G - dx2G, y2G - dy2G), (x2G, y2G)
 	return map(view.VconvertG, grid.GbezierG(anchorsG))
+
+
+def VstalkpsH(odge0H, odge1H, bend, view):
+	return VbezierpsG(
+		grid.GconvertH(odge0H[0]),
+		grid.GconvertH(odge0H[1]),
+		grid.GconvertH(odge1H[0]),
+		grid.GconvertH(odge1H[1]),
+		bend, view
+	)
 
 
 class Stem(Part):
@@ -116,6 +132,12 @@ class Stem(Part):
 	def tostalk(self, branchspec):
 		return Stalk(self.odgeH, self.color, self.parent, branchspec)
 
+	def addstalk(self, redge):
+		stalk = self.tostalk((redge,))
+		stalk.attachtoparent()
+		self.removefromstate()
+		stalk.addtostate()
+
 	def toorgan(self, label):
 		return Organ(self.odgeH, self.color, self.parent, label)
 
@@ -129,11 +151,8 @@ class Stem(Part):
 
 	def draw(self, view = None):
 		view = view or camera
-		wV = max(1, int(0.2 * view.VscaleG))
-		wborderV = 2 + wV + int(0.06 * view.VscaleG)
 		p0V, p1V = VstempsH(self.odgeH, settings.bends[self.color], view)
-		pygame.draw.line(camera.screen, (0, 0, 0), p0V, p1V, wborderV)
-		pygame.draw.line(camera.screen, settings.colors[self.color], p0V, p1V, wV)
+		drawwithborder([p0V, p1V], settings.colors[self.color], 0.2, view)
 
 class Stalk(Part):
 	canaxe = True
@@ -154,14 +173,20 @@ class Stalk(Part):
 	def attachtostem(self, stem):
 		return stem.tostalk(self.branchspec)
 
+	def addstalk(self, redge):
+		branchspec = tuple(sorted(self.branchspec + (redge,)))
+		stalk = Stalk(self.odgeH, self.color, self.parent, branchspec)
+		for thing in self.children.values():
+			thing.parent = stalk
+			thing.attachtoparent()
+		stalk.attachtoparent()
+		self.removefromstate()
+		stalk.addtostate()
+
 	def draw(self, view = None):
-		view = view or camera
-		wV = max(1, int(0.2 * view.VscaleG))
-		wborderV = 2 + wV + int(0.06 * view.VscaleG)
 		for sodgeH in sorted(self.children):
 			psV = VstalkpsH(self.odgeH, sodgeH, settings.bends[self.color], view)
-			pygame.draw.lines(camera.screen, (0, 0, 0), False, psV, wborderV)
-			pygame.draw.lines(camera.screen, settings.colors[self.color], False, psV, wV)
+			drawwithborder(psV, settings.colors[self.color], 0.2, view)
 
 class Organ(Part):
 	occupiestile = True

@@ -45,3 +45,16 @@ circles, as with the tetris control scheme.
 	Left-click in panel area: select part
 	Right-click in panel area: recycle part
 
+Control scheme utree
+--------------------
+
+Arbitrary stalks may be placed at any time by dragging from edge to edge. Drag from the entry point
+of the tile to the exit point of the tile. To create a branch, drag the individual stalks from the
+entry point. Branches may not be created coming from the same entry point as an organ.
+
+Organs are placed the same as in control scheme pyweek.
+
+	Left-click on edge or left drag from edge: grow stalk from selected edge
+	Left-click in panel area: select organ
+	Right-click in panel area: recycle organ
+

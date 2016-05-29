@@ -93,3 +93,14 @@ def HturnodgeH(((edgexH, edgeyH), (tilexH, tileyH)), nrot):
 def HpathodgeH(odgeH, nrot):
 	return HflipodgeH(HturnodgeH(odgeH, nrot))
 
+# If it's possible to enter a tile through odgeH and exit through edgeH, return the relative edge
+# numbering (0 through 5). If not return None.
+def redgefromodgeH(odgeH, edgeH):
+	(ixH, iyH), (cxH, cyH) = odgeH
+	exH, eyH = edgeH
+	d1H = exH - cxH, eyH - cyH
+	if d1H not in edgedsH:
+		return None
+	d0H = ixH - cxH, iyH - cyH
+	return (edgedsH.index(d1H) - edgedsH.index(d0H)) % 6
+
