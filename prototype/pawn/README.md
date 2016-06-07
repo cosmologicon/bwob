@@ -12,8 +12,15 @@ Controls
     1/2: zoom
     F12: screenshot
 
-To remove a part, left-click on the axe and then on the base of the part you want to remove. All
-parts "outward" from the removed part will also be removed.
+Removing parts
+--------------
+
+P-axe: left-click on the axe and then on the base of the part you want to remove. All parts
+"outward" from the removed part will also be removed.
+
+O-axe: left-click on the axe and then click on the base of the part you want to remove. For
+branching paths, you can either click on the "outer" half to remove a single branch, or the "inner"
+half to remove all branches.
 
 Control scheme rando
 --------------------

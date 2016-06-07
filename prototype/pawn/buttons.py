@@ -19,6 +19,7 @@ class Button(object):
 		x0V, y0V = self.pV
 		return (xV - x0V) ** 2 + (yV - y0V) ** 2 < self.rV ** 2
 
-axe = Button("axe", (camera.grectV.right - 35, camera.grectV.bottom - 35))
+paxe = Button("p.ax", (camera.grectV.right - 35, camera.grectV.bottom - 35))
+oaxe = Button("o.ax", (camera.grectV.right - 35, camera.grectV.bottom - 100))
 
 

@@ -1,3 +1,4 @@
+from __future__ import division
 import pygame, random, math
 import camera, grid, state, settings
 
@@ -15,6 +16,21 @@ def drawwithborder(psV, color, wG, view = None):
 	wborderV = 2 + wV + int(0.06 * view.VscaleG)
 	pygame.draw.lines(camera.screen, (0, 0, 0), False, psV, wborderV)
 	pygame.draw.lines(camera.screen, color, False, psV, wV)
+
+def GodgecenterH(odgeH):
+	eH, tH = odgeH
+	(exG, eyG), (txG, tyG) = grid.GconvertH(eH), grid.GconvertH(tH)
+	xG = 2/3 * exG + 1/3 * txG
+	yG = 2/3 * eyG + 1/3 * tyG
+	return xG, yG
+
+def drawdotodgeH(odgeH, color, view = None):
+	drawdotG(GodgecenterH(odgeH), math.sqrt(3) / 6, color, view)
+
+def withinodgeH(odgeH, pG):
+	oxG, oyG = GodgecenterH(odgeH)
+	xG, yG = pG
+	return (oxG - xG) ** 2 + (oyG - yG) ** 2 < 3 / 36
 
 class Part(object):
 	occupiestile = False
@@ -70,6 +86,11 @@ class Part(object):
 
 	def drawdot(self, color, view = None):
 		drawdotG(grid.GconvertH(self.odgeH[0]), 0.25, color, view)
+
+	def oaxetargets(self):
+		return []
+	def oaxeat(self, odgeH):
+		pass
 
 class Core(Part):
 	occupiestile = True
@@ -182,11 +203,36 @@ class Stalk(Part):
 		stalk.attachtoparent()
 		self.removefromstate()
 		stalk.addtostate()
+	def removestalk(self, rodgeH):
+		branchspec = tuple(sorted(b for b in self.branchspec if grid.HpathodgeH(self.odgeH, b) != rodgeH))
+		if not branchspec:
+			axe(self)
+			return
+		stalk = Stalk(self.odgeH, self.color, self.parent, branchspec)
+		for sodgeH, thing in self.children.items():
+			if sodgeH == rodgeH:
+				continue
+			thing.parent = stalk
+			thing.attachtoparent()
+		stalk.attachtoparent()
+		self.removefromstate()
+		stalk.addtostate()
 
 	def draw(self, view = None):
 		for sodgeH in sorted(self.children):
 			psV = VstalkpsH(self.odgeH, sodgeH, settings.bends[self.color], view)
 			drawwithborder(psV, settings.colors[self.color], 0.2, view)
+
+	def oaxetargets(self):
+		yield self.odgeH
+		for sodgeH in self.children:
+			yield grid.HflipodgeH(sodgeH)
+
+	def oaxeat(self, odgeH):
+		if odgeH == self.odgeH:
+			axe(self)
+			return
+		self.removestalk(grid.HflipodgeH(odgeH))
 
 class Organ(Part):
 	occupiestile = True
@@ -225,6 +271,11 @@ class Organ(Part):
 		surf = font.render(self.label, True, (0, 0, 0))
 		camera.screen.blit(surf, surf.get_rect(center = p1V))
 
+	def oaxetargets(self):
+		yield self.odgeH
+	def oaxeat(self, odgeH):
+		axe(self)
+
 class Starget(object):
 	def __init__(self, pH, color):
 		self.pH = pH
@@ -257,6 +308,8 @@ class Starget(object):
 		wV = max(1, int(0.02 * camera.VscaleG))
 		color = self.color1 if self.isactive() else self.color0
 		pygame.draw.lines(camera.screen, color, True, psV, wV)
+	def oaxetargets(self):
+		return []
 
 def randomorgan(color = None):
 	if color is None:

@@ -56,12 +56,20 @@ def think(dt, mstate, kstate):
 	inpanel = camera.prectV.collidepoint(mposV)
 
 	if settings.controlscheme == "rando":
-		if mstate["ldown"] and buttons.axe.contains(mposV):
-			cursor = None if cursor is buttons.axe else buttons.axe
-		elif mstate["ldown"] and cursor is buttons.axe:
+		if mstate["ldown"] and buttons.paxe.contains(mposV):
+			cursor = None if cursor is buttons.paxe else buttons.paxe
+		elif mstate["ldown"] and buttons.oaxe.contains(mposV):
+			cursor = None if cursor is buttons.oaxe else buttons.oaxe
+		elif mstate["ldown"] and cursor is buttons.paxe:
 			part = state.edgesH.get(grid.HnearestedgeH(mposH))
 			if part and part.canaxe:
 				thing.axe(part)
+			cursor = None
+		elif mstate["ldown"] and cursor is buttons.oaxe:
+			for obj in state.things:
+				for odgeH in obj.oaxetargets():
+					if thing.withinodgeH(odgeH, mposG):
+						obj.oaxeat(odgeH)
 			cursor = None
 		elif mstate["ldown"] and ingame:
 			thing.growrandom()
@@ -72,12 +80,20 @@ def think(dt, mstate, kstate):
 			for _ in range(10):
 				thing.growrandom()
 	if settings.controlscheme == "tetris":
-		if mstate["ldown"] and buttons.axe.contains(mposV):
-			cursor = None if cursor is buttons.axe else buttons.axe
-		elif mstate["ldown"] and cursor is buttons.axe:
+		if mstate["ldown"] and buttons.paxe.contains(mposV):
+			cursor = None if cursor is buttons.paxe else buttons.paxe
+		elif mstate["ldown"] and buttons.oaxe.contains(mposV):
+			cursor = None if cursor is buttons.oaxe else buttons.oaxe
+		elif mstate["ldown"] and cursor is buttons.paxe:
 			part = state.edgesH.get(grid.HnearestedgeH(mposH))
 			if part and part.canaxe:
 				thing.axe(part)
+			cursor = None
+		elif mstate["ldown"] and cursor is buttons.oaxe:
+			for obj in state.things:
+				for odgeH in obj.oaxetargets():
+					if thing.withinodgeH(odgeH, mposG):
+						obj.oaxeat(odgeH)
 			cursor = None
 		if cursor is None:
 			cursor = thing.randompart()
@@ -89,12 +105,20 @@ def think(dt, mstate, kstate):
 		elif mstate["ldown"] and inpanel:
 			cursor = None
 	if settings.controlscheme == "pyweek":
-		if mstate["ldown"] and buttons.axe.contains(mposV):
-			cursor = None if cursor is buttons.axe else buttons.axe
-		elif mstate["ldown"] and cursor is buttons.axe:
+		if mstate["ldown"] and buttons.paxe.contains(mposV):
+			cursor = None if cursor is buttons.paxe else buttons.paxe
+		elif mstate["ldown"] and buttons.oaxe.contains(mposV):
+			cursor = None if cursor is buttons.oaxe else buttons.oaxe
+		elif mstate["ldown"] and cursor is buttons.paxe:
 			part = state.edgesH.get(grid.HnearestedgeH(mposH))
 			if part and part.canaxe:
 				thing.axe(part)
+			cursor = None
+		elif mstate["ldown"] and cursor is buttons.oaxe:
+			for obj in state.things:
+				for odgeH in obj.oaxetargets():
+					if thing.withinodgeH(odgeH, mposG):
+						obj.oaxeat(odgeH)
 			cursor = None
 		elif (mstate["ldown"] or mstate["lup"]) and ingame and cursor:
 			stem = state.edgesH.get(grid.HnearestedgeH(mposH))
@@ -112,12 +136,20 @@ def think(dt, mstate, kstate):
 			if part:
 				fillslot(available.index(part))
 	if settings.controlscheme == "utree":
-		if mstate["ldown"] and buttons.axe.contains(mposV):
-			cursor = None if cursor is buttons.axe else buttons.axe
-		elif mstate["ldown"] and cursor is buttons.axe:
+		if mstate["ldown"] and buttons.paxe.contains(mposV):
+			cursor = None if cursor is buttons.paxe else buttons.paxe
+		elif mstate["ldown"] and buttons.oaxe.contains(mposV):
+			cursor = None if cursor is buttons.oaxe else buttons.oaxe
+		elif mstate["ldown"] and cursor is buttons.paxe:
 			part = state.edgesH.get(grid.HnearestedgeH(mposH))
 			if part and part.canaxe:
 				thing.axe(part)
+			cursor = None
+		elif mstate["ldown"] and cursor is buttons.oaxe:
+			for obj in state.things:
+				for odgeH in obj.oaxetargets():
+					if thing.withinodgeH(odgeH, mposG):
+						obj.oaxeat(odgeH)
 			cursor = None
 		elif (mstate["ldown"] or mstate["lup"]) and ingame and isinstance(cursor, thing.Organ):
 			stem = state.edgesH.get(grid.HnearestedgeH(mposH))
@@ -160,7 +192,6 @@ def Gstretchpoints(odgeH, pG):
 	nxG, nyG = x1G - x0G, y1G - y0G
 	hxG, hyG = (x3G - x0G) / 2, (y3G - y0G) / 2
 	hdotn = hxG * nxG + hyG * nyG
-	print hdotn, hxG, hyG, nxG, nyG
 	hcrossn = hxG * nyG - hyG * nxG
 	if hdotn <= 0:
 		mxG, myG = -nxG, -nyG
@@ -179,10 +210,14 @@ def Gstretchpoints(odgeH, pG):
 def drawgame():
 	if cursor is None:
 		pass
-	elif cursor in [buttons.axe]:
+	elif cursor in [buttons.paxe]:
 		for obj in state.things:
 			if obj.odgeH and obj.canaxe:
 				obj.drawdot((255, 100, 100))
+	elif cursor in [buttons.oaxe]:
+		for obj in state.things:
+			for odgeH in obj.oaxetargets():
+				thing.drawdotodgeH(odgeH, (255, 100, 100))
 	elif settings.controlscheme == "pyweek" or settings.controlscheme == "utree" and isinstance(cursor, thing.Organ):
 		for obj in state.things:
 			if obj.odgeH and obj.canattach(cursor):
@@ -199,7 +234,7 @@ def drawgame():
 
 def drawpanel():
 	if settings.controlscheme == "tetris":
-		if cursor not in [None, buttons.axe]:
+		if cursor not in [None, buttons.paxe]:
 			wV, hV = camera.prectV.size
 			x0V, y0V = camera.prectV.center
 			scale = int(min(wV, hV) * 0.18)
@@ -223,6 +258,6 @@ def drawpanel():
 				rV = int(view.VscaleG * 0.9)
 				pygame.draw.circle(camera.screen, (255, 255, 255), view().VconvertG((0, 0)), rV, 2)
 			part.draw(view())
-	for button in [buttons.axe]:
+	for button in [buttons.paxe, buttons.oaxe]:
 		button.draw()
 
